@@ -1,0 +1,1575 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SWCI Storm Update</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=Newsreader:opsz,wght@6..72,500;6..72,600&display=swap">
+<style>
+html,body{margin:0}
+img{max-width:100%}
+
+/* required styles */
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box,
+.leaflet-image-layer,
+.leaflet-layer {
+	position: absolute;
+	left: 0;
+	top: 0;
+	}
+.leaflet-container {
+	overflow: hidden;
+	}
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	-webkit-user-select: none;
+	   -moz-user-select: none;
+	        user-select: none;
+	  -webkit-user-drag: none;
+	}
+/* Prevents IE11 from highlighting tiles in blue */
+.leaflet-tile::selection {
+	background: transparent;
+}
+/* Safari renders non-retina tile on retina better with this, but Chrome is worse */
+.leaflet-safari .leaflet-tile {
+	image-rendering: -webkit-optimize-contrast;
+	}
+/* hack that prevents hw layers "stretching" when loading new tiles */
+.leaflet-safari .leaflet-tile-container {
+	width: 1600px;
+	height: 1600px;
+	-webkit-transform-origin: 0 0;
+	}
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+	display: block;
+	}
+/* .leaflet-container svg: reset svg max-width decleration shipped in Joomla! (joomla.org) 3.x */
+/* .leaflet-container img: map is broken in FF if you have max-width: 100% on tiles */
+.leaflet-container .leaflet-overlay-pane svg {
+	max-width: none !important;
+	max-height: none !important;
+	}
+.leaflet-container .leaflet-marker-pane img,
+.leaflet-container .leaflet-shadow-pane img,
+.leaflet-container .leaflet-tile-pane img,
+.leaflet-container img.leaflet-image-layer,
+.leaflet-container .leaflet-tile {
+	max-width: none !important;
+	max-height: none !important;
+	width: auto;
+	padding: 0;
+	}
+
+.leaflet-container img.leaflet-tile {
+	/* See: https://bugs.chromium.org/p/chromium/issues/detail?id=600120 */
+	mix-blend-mode: plus-lighter;
+}
+
+.leaflet-container.leaflet-touch-zoom {
+	-ms-touch-action: pan-x pan-y;
+	touch-action: pan-x pan-y;
+	}
+.leaflet-container.leaflet-touch-drag {
+	-ms-touch-action: pinch-zoom;
+	/* Fallback for FF which doesn't support pinch-zoom */
+	touch-action: none;
+	touch-action: pinch-zoom;
+}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom {
+	-ms-touch-action: none;
+	touch-action: none;
+}
+.leaflet-container {
+	-webkit-tap-highlight-color: transparent;
+}
+.leaflet-container a {
+	-webkit-tap-highlight-color: rgba(51, 181, 229, 0.4);
+}
+.leaflet-tile {
+	filter: inherit;
+	visibility: hidden;
+	}
+.leaflet-tile-loaded {
+	visibility: inherit;
+	}
+.leaflet-zoom-box {
+	width: 0;
+	height: 0;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	z-index: 800;
+	}
+/* workaround for https://bugzilla.mozilla.org/show_bug.cgi?id=888319 */
+.leaflet-overlay-pane svg {
+	-moz-user-select: none;
+	}
+
+.leaflet-pane         { z-index: 400; }
+
+.leaflet-tile-pane    { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane  { z-index: 500; }
+.leaflet-marker-pane  { z-index: 600; }
+.leaflet-tooltip-pane   { z-index: 650; }
+.leaflet-popup-pane   { z-index: 700; }
+
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg    { z-index: 200; }
+
+.leaflet-vml-shape {
+	width: 1px;
+	height: 1px;
+	}
+.lvml {
+	behavior: none;
+	display: inline-block;
+	position: absolute;
+	}
+
+
+/* control positioning */
+
+.leaflet-control {
+	position: relative;
+	z-index: 800;
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+.leaflet-top,
+.leaflet-bottom {
+	position: absolute;
+	z-index: 1000;
+	pointer-events: none;
+	}
+.leaflet-top {
+	top: 0;
+	}
+.leaflet-right {
+	right: 0;
+	}
+.leaflet-bottom {
+	bottom: 0;
+	}
+.leaflet-left {
+	left: 0;
+	}
+.leaflet-control {
+	float: left;
+	clear: both;
+	}
+.leaflet-right .leaflet-control {
+	float: right;
+	}
+.leaflet-top .leaflet-control {
+	margin-top: 10px;
+	}
+.leaflet-bottom .leaflet-control {
+	margin-bottom: 10px;
+	}
+.leaflet-left .leaflet-control {
+	margin-left: 10px;
+	}
+.leaflet-right .leaflet-control {
+	margin-right: 10px;
+	}
+
+
+/* zoom and fade animations */
+
+.leaflet-fade-anim .leaflet-popup {
+	opacity: 0;
+	-webkit-transition: opacity 0.2s linear;
+	   -moz-transition: opacity 0.2s linear;
+	        transition: opacity 0.2s linear;
+	}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup {
+	opacity: 1;
+	}
+.leaflet-zoom-animated {
+	-webkit-transform-origin: 0 0;
+	    -ms-transform-origin: 0 0;
+	        transform-origin: 0 0;
+	}
+svg.leaflet-zoom-animated {
+	will-change: transform;
+}
+
+.leaflet-zoom-anim .leaflet-zoom-animated {
+	-webkit-transition: -webkit-transform 0.25s cubic-bezier(0,0,0.25,1);
+	   -moz-transition:    -moz-transform 0.25s cubic-bezier(0,0,0.25,1);
+	        transition:         transform 0.25s cubic-bezier(0,0,0.25,1);
+	}
+.leaflet-zoom-anim .leaflet-tile,
+.leaflet-pan-anim .leaflet-tile {
+	-webkit-transition: none;
+	   -moz-transition: none;
+	        transition: none;
+	}
+
+.leaflet-zoom-anim .leaflet-zoom-hide {
+	visibility: hidden;
+	}
+
+
+/* cursors */
+
+.leaflet-interactive {
+	cursor: pointer;
+	}
+.leaflet-grab {
+	cursor: -webkit-grab;
+	cursor:    -moz-grab;
+	cursor:         grab;
+	}
+.leaflet-crosshair,
+.leaflet-crosshair .leaflet-interactive {
+	cursor: crosshair;
+	}
+.leaflet-popup-pane,
+.leaflet-control {
+	cursor: auto;
+	}
+.leaflet-dragging .leaflet-grab,
+.leaflet-dragging .leaflet-grab .leaflet-interactive,
+.leaflet-dragging .leaflet-marker-draggable {
+	cursor: move;
+	cursor: -webkit-grabbing;
+	cursor:    -moz-grabbing;
+	cursor:         grabbing;
+	}
+
+/* marker & overlays interactivity */
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-image-layer,
+.leaflet-pane > svg path,
+.leaflet-tile-container {
+	pointer-events: none;
+	}
+
+.leaflet-marker-icon.leaflet-interactive,
+.leaflet-image-layer.leaflet-interactive,
+.leaflet-pane > svg path.leaflet-interactive,
+svg.leaflet-image-layer.leaflet-interactive path {
+	pointer-events: visiblePainted; /* IE 9-10 doesn't have auto */
+	pointer-events: auto;
+	}
+
+/* visual tweaks */
+
+.leaflet-container {
+	background: #ddd;
+	outline-offset: 1px;
+	}
+.leaflet-container a {
+	color: #0078A8;
+	}
+.leaflet-zoom-box {
+	border: 2px dotted #38f;
+	background: rgba(255,255,255,0.5);
+	}
+
+
+/* general typography */
+.leaflet-container {
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	font-size: 0.75rem;
+	line-height: 1.5;
+	}
+
+
+/* general toolbar styles */
+
+.leaflet-bar {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+	border-radius: 4px;
+	}
+.leaflet-bar a {
+	background-color: #fff;
+	border-bottom: 1px solid #ccc;
+	width: 26px;
+	height: 26px;
+	line-height: 26px;
+	display: block;
+	text-align: center;
+	text-decoration: none;
+	color: black;
+	}
+.leaflet-bar a,
+.leaflet-control-layers-toggle {
+	background-position: 50% 50%;
+	background-repeat: no-repeat;
+	display: block;
+	}
+.leaflet-bar a:hover,
+.leaflet-bar a:focus {
+	background-color: #f4f4f4;
+	}
+.leaflet-bar a:first-child {
+	border-top-left-radius: 4px;
+	border-top-right-radius: 4px;
+	}
+.leaflet-bar a:last-child {
+	border-bottom-left-radius: 4px;
+	border-bottom-right-radius: 4px;
+	border-bottom: none;
+	}
+.leaflet-bar a.leaflet-disabled {
+	cursor: default;
+	background-color: #f4f4f4;
+	color: #bbb;
+	}
+
+.leaflet-touch .leaflet-bar a {
+	width: 30px;
+	height: 30px;
+	line-height: 30px;
+	}
+.leaflet-touch .leaflet-bar a:first-child {
+	border-top-left-radius: 2px;
+	border-top-right-radius: 2px;
+	}
+.leaflet-touch .leaflet-bar a:last-child {
+	border-bottom-left-radius: 2px;
+	border-bottom-right-radius: 2px;
+	}
+
+/* zoom control */
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+	font: bold 18px 'Lucida Console', Monaco, monospace;
+	text-indent: 1px;
+	}
+
+.leaflet-touch .leaflet-control-zoom-in, .leaflet-touch .leaflet-control-zoom-out  {
+	font-size: 22px;
+	}
+
+
+/* layers control */
+
+.leaflet-control-layers {
+	box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+	background: #fff;
+	border-radius: 5px;
+	}
+.leaflet-control-layers-toggle {
+	background-image: none;
+	width: 36px;
+	height: 36px;
+	}
+.leaflet-retina .leaflet-control-layers-toggle {
+	background-image: none;
+	background-size: 26px 26px;
+	}
+.leaflet-touch .leaflet-control-layers-toggle {
+	width: 44px;
+	height: 44px;
+	}
+.leaflet-control-layers .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .leaflet-control-layers-toggle {
+	display: none;
+	}
+.leaflet-control-layers-expanded .leaflet-control-layers-list {
+	display: block;
+	position: relative;
+	}
+.leaflet-control-layers-expanded {
+	padding: 6px 10px 6px 6px;
+	color: #333;
+	background: #fff;
+	}
+.leaflet-control-layers-scrollbar {
+	overflow-y: scroll;
+	overflow-x: hidden;
+	padding-right: 5px;
+	}
+.leaflet-control-layers-selector {
+	margin-top: 2px;
+	position: relative;
+	top: 1px;
+	}
+.leaflet-control-layers label {
+	display: block;
+	font-size: 13px;
+	font-size: 1.08333em;
+	}
+.leaflet-control-layers-separator {
+	height: 0;
+	border-top: 1px solid #ddd;
+	margin: 5px -10px 5px -6px;
+	}
+
+/* Default icon URLs */
+.leaflet-default-icon-path { /* used only in path-guessing heuristic, see L.Icon.Default */
+	background-image: none;
+	}
+
+
+/* attribution and scale controls */
+
+.leaflet-container .leaflet-control-attribution {
+	background: #fff;
+	background: rgba(255, 255, 255, 0.8);
+	margin: 0;
+	}
+.leaflet-control-attribution,
+.leaflet-control-scale-line {
+	padding: 0 5px;
+	color: #333;
+	line-height: 1.4;
+	}
+.leaflet-control-attribution a {
+	text-decoration: none;
+	}
+.leaflet-control-attribution a:hover,
+.leaflet-control-attribution a:focus {
+	text-decoration: underline;
+	}
+.leaflet-attribution-flag {
+	display: inline !important;
+	vertical-align: baseline !important;
+	width: 1em;
+	height: 0.6669em;
+	}
+.leaflet-left .leaflet-control-scale {
+	margin-left: 5px;
+	}
+.leaflet-bottom .leaflet-control-scale {
+	margin-bottom: 5px;
+	}
+.leaflet-control-scale-line {
+	border: 2px solid #777;
+	border-top: none;
+	line-height: 1.1;
+	padding: 2px 5px 1px;
+	white-space: nowrap;
+	-moz-box-sizing: border-box;
+	     box-sizing: border-box;
+	background: rgba(255, 255, 255, 0.8);
+	text-shadow: 1px 1px #fff;
+	}
+.leaflet-control-scale-line:not(:first-child) {
+	border-top: 2px solid #777;
+	border-bottom: none;
+	margin-top: -2px;
+	}
+.leaflet-control-scale-line:not(:first-child):not(:last-child) {
+	border-bottom: 2px solid #777;
+	}
+
+.leaflet-touch .leaflet-control-attribution,
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	box-shadow: none;
+	}
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+	border: 2px solid rgba(0,0,0,0.2);
+	background-clip: padding-box;
+	}
+
+
+/* popup */
+
+.leaflet-popup {
+	position: absolute;
+	text-align: center;
+	margin-bottom: 20px;
+	}
+.leaflet-popup-content-wrapper {
+	padding: 1px;
+	text-align: left;
+	border-radius: 12px;
+	}
+.leaflet-popup-content {
+	margin: 13px 24px 13px 20px;
+	line-height: 1.3;
+	font-size: 13px;
+	font-size: 1.08333em;
+	min-height: 1px;
+	}
+.leaflet-popup-content p {
+	margin: 17px 0;
+	margin: 1.3em 0;
+	}
+.leaflet-popup-tip-container {
+	width: 40px;
+	height: 20px;
+	position: absolute;
+	left: 50%;
+	margin-top: -1px;
+	margin-left: -20px;
+	overflow: hidden;
+	pointer-events: none;
+	}
+.leaflet-popup-tip {
+	width: 17px;
+	height: 17px;
+	padding: 1px;
+
+	margin: -10px auto 0;
+	pointer-events: auto;
+
+	-webkit-transform: rotate(45deg);
+	   -moz-transform: rotate(45deg);
+	    -ms-transform: rotate(45deg);
+	        transform: rotate(45deg);
+	}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+	background: white;
+	color: #333;
+	box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+	}
+.leaflet-container a.leaflet-popup-close-button {
+	position: absolute;
+	top: 0;
+	right: 0;
+	border: none;
+	text-align: center;
+	width: 24px;
+	height: 24px;
+	font: 16px/24px Tahoma, Verdana, sans-serif;
+	color: #757575;
+	text-decoration: none;
+	background: transparent;
+	}
+.leaflet-container a.leaflet-popup-close-button:hover,
+.leaflet-container a.leaflet-popup-close-button:focus {
+	color: #585858;
+	}
+.leaflet-popup-scrolled {
+	overflow: auto;
+	}
+
+.leaflet-oldie .leaflet-popup-content-wrapper {
+	-ms-zoom: 1;
+	}
+.leaflet-oldie .leaflet-popup-tip {
+	width: 24px;
+	margin: 0 auto;
+
+	-ms-filter: "progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678)";
+	filter: progid:DXImageTransform.Microsoft.Matrix(M11=0.70710678, M12=0.70710678, M21=-0.70710678, M22=0.70710678);
+	}
+
+.leaflet-oldie .leaflet-control-zoom,
+.leaflet-oldie .leaflet-control-layers,
+.leaflet-oldie .leaflet-popup-content-wrapper,
+.leaflet-oldie .leaflet-popup-tip {
+	border: 1px solid #999;
+	}
+
+
+/* div icon */
+
+.leaflet-div-icon {
+	background: #fff;
+	border: 1px solid #666;
+	}
+
+
+/* Tooltip */
+/* Base styles for the element that has a tooltip */
+.leaflet-tooltip {
+	position: absolute;
+	padding: 6px;
+	background-color: #fff;
+	border: 1px solid #fff;
+	border-radius: 3px;
+	color: #222;
+	white-space: nowrap;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	pointer-events: none;
+	box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+	}
+.leaflet-tooltip.leaflet-interactive {
+	cursor: pointer;
+	pointer-events: auto;
+	}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	position: absolute;
+	pointer-events: none;
+	border: 6px solid transparent;
+	background: transparent;
+	content: "";
+	}
+
+/* Directions */
+
+.leaflet-tooltip-bottom {
+	margin-top: 6px;
+}
+.leaflet-tooltip-top {
+	margin-top: -6px;
+}
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-top:before {
+	left: 50%;
+	margin-left: -6px;
+	}
+.leaflet-tooltip-top:before {
+	bottom: 0;
+	margin-bottom: -12px;
+	border-top-color: #fff;
+	}
+.leaflet-tooltip-bottom:before {
+	top: 0;
+	margin-top: -12px;
+	margin-left: -6px;
+	border-bottom-color: #fff;
+	}
+.leaflet-tooltip-left {
+	margin-left: -6px;
+}
+.leaflet-tooltip-right {
+	margin-left: 6px;
+}
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+	top: 50%;
+	margin-top: -6px;
+	}
+.leaflet-tooltip-left:before {
+	right: 0;
+	margin-right: -12px;
+	border-left-color: #fff;
+	}
+.leaflet-tooltip-right:before {
+	left: 0;
+	margin-left: -12px;
+	border-right-color: #fff;
+	}
+
+/* Printing */
+
+@media print {
+	/* Prevent printers from removing background-images of controls. */
+	.leaflet-control {
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+		}
+	}
+
+/* Layout: photo header, then a reading column beside a pinned map that changes layer as each section scrolls in (map pins on top on phones) */
+:root{
+  --paper:#f6f8f7; --card:#ffffff; --ink:#16252a; --muted:#53666b; --rule:#d9e1df;
+  --accent:#1b6a78; --accent-soft:#e3eff1; --sea:#d6e3e7; --chip:#eef3f2;
+  --font-display:'Newsreader',Georgia,'Times New Roman',serif;
+  --font-body:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-data:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+  --col:460px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#11181a; --card:#172124; --ink:#e2eaeb; --muted:#9aacb0; --rule:#2a373b;
+  --accent:#73c2d2; --accent-soft:#1c3237; --sea:#0d191d; --chip:#1e2a2d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#11181a; --card:#172124; --ink:#e2eaeb; --muted:#9aacb0; --rule:#2a373b;
+  --accent:#73c2d2; --accent-soft:#1c3237; --sea:#0d191d; --chip:#1e2a2d; color-scheme:dark}
+
+[hidden]{display:none!important}
+body{background:var(--paper);color:var(--ink);font:16px/1.62 var(--font-body);margin:0}
+.wrap-x{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Header photo */
+.hero{position:relative;min-height:min(78vh,720px);display:flex;align-items:flex-end;color:#fff;
+  background:#28423a url("img/hero.webp") center 40%/cover no-repeat}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,20,22,0) 35%,rgba(10,20,22,.72) 100%)}
+.hero-inner{position:relative;z-index:1;max-width:980px;padding-block:48px 40px}
+.hero .kicker{font:600 12px/1.2 var(--font-body);letter-spacing:.14em;text-transform:uppercase;opacity:.9;margin:0 0 14px}
+.hero h1{font:600 clamp(36px,6vw,68px)/1.02 var(--font-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+.hero .dek{font:400 clamp(18px,2.2vw,23px)/1.4 var(--font-display);margin:16px 0 0;max-width:34ch;opacity:.95}
+.hero .byline{font-size:13.5px;margin:22px 0 0;opacity:.85}
+
+/* Story grid */
+.story{display:grid;grid-template-columns:var(--col) 1fr;align-items:start}
+.text{min-width:0;padding-block:8px 40vh;display:flex;flex-direction:column;gap:0}
+.mapcol{position:sticky;top:0;height:100vh;height:100dvh;min-width:0;border-left:1px solid var(--rule)}
+#map{position:absolute;inset:0;background:var(--sea)}
+.leaflet-container{background:var(--sea);font:13px/1.4 var(--font-body)}
+
+.step{min-height:78vh;padding-block:40px;display:flex;flex-direction:column;justify-content:center;gap:14px;
+  border-left:3px solid transparent;padding-left:20px;margin-left:-23px;transition:border-color .3s}
+.step.active{border-left-color:var(--accent)}
+.step.short{min-height:52vh}
+.step h2{font:600 28px/1.15 var(--font-display);margin:0;text-wrap:balance}
+.step h3{font:600 21px/1.2 var(--font-display);margin:6px 0 0}
+.step p{margin:0;max-width:62ch}
+.step ul{margin:0;padding-left:1.15em;display:flex;flex-direction:column;gap:4px}
+.lede{font:400 20px/1.5 var(--font-display)}
+.callout{background:var(--accent-soft);border-radius:6px;padding:12px 14px;font-size:15px}
+.mono{font-family:var(--font-data);font-size:.92em}
+figure{margin:6px 0 0;display:flex;flex-direction:column;gap:8px}
+figure img{border-radius:6px;background:#fff;max-width:100%;height:auto}
+figure img.narrow{max-width:240px}
+figcaption{font-size:13px;color:var(--muted)}
+.d8{display:grid;grid-template-columns:repeat(4,auto);gap:4px 14px;justify-content:start;font-size:14px}
+.d8 span{display:inline-flex;gap:8px;align-items:center}
+.d8 i{width:12px;height:12px;border-radius:2px;display:inline-block}
+
+table.w{border-collapse:collapse;width:100%;font-size:14.5px}
+table.w th,table.w td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
+table.w th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+table.w td:last-child,table.w th:last-child{text-align:right;font-family:var(--font-data);font-variant-numeric:tabular-nums}
+.tablebox{overflow-x:auto}
+
+/* Map overlays */
+.mapcard{position:absolute;z-index:500;background:color-mix(in srgb,var(--card) 94%,transparent);color:var(--ink);
+  border:1px solid var(--rule);border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,.08)}
+.legend{left:12px;bottom:28px;padding:10px 12px;max-width:min(310px,calc(100% - 24px));font-size:13px;display:flex;flex-direction:column;gap:6px}
+.legend .t{font-weight:600;font-size:14px}
+.legend .s{color:var(--muted);font-size:12px}
+.legend .rows{display:flex;flex-direction:column;gap:3px}
+.legend .row{display:grid;grid-template-columns:18px 1fr;gap:8px;align-items:center}
+.legend .sw{width:18px;height:12px;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.legend .ln{height:0;border-top-style:solid;border-top-color:#1b5aa0;width:16px}
+.legend .num{font-family:var(--font-data);font-size:12px;font-variant-numeric:tabular-nums}
+.legend .bar{height:10px;border-radius:2px;min-width:200px}
+.legend .ends{gap:10px}
+.legend .ends{display:flex;justify-content:space-between;font-family:var(--font-data);font-size:11.5px;color:var(--muted)}
+.layers{right:12px;top:12px;padding:6px}
+.layers select{font:500 13.5px var(--font-body);color:var(--ink);background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:6px 8px;max-width:58vw}
+.layers select:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.search{z-index:520;background:var(--card);right:12px;top:62px;width:min(320px,calc(100% - 84px));padding:6px}
+.search input{width:100%;box-sizing:border-box;font:14px var(--font-body);color:var(--ink);background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:8px 10px}
+.search input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.search ul{list-style:none;margin:6px 0 0;padding:0;max-height:min(46vh,360px);overflow:auto}
+.search li{padding:7px 9px;border-radius:5px;cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.search li b{font-size:14px;font-weight:600}
+.search li span{font-size:12px;color:var(--muted)}
+.search li[aria-selected="true"],.search li:hover{background:var(--chip)}
+.search .none{color:var(--muted);font-size:13.5px;cursor:default}
+.hu10toggle{right:12px;top:118px;padding:7px 11px;display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500;cursor:pointer;user-select:none}
+.hu10toggle input{accent-color:var(--accent);margin:0;width:16px;height:16px}
+.hu10toggle:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:1px}
+.loading{right:12px;bottom:28px;padding:6px 10px;font-size:12px;color:var(--accent)}
+.hatch-sw{background:repeating-linear-gradient(45deg,#1e2c30 0 2px,transparent 2px 6px),#ffffff;opacity:.85}
+
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--card);color:var(--ink)}
+.leaflet-popup-content{margin:10px 12px;font-size:13.5px}
+.leaflet-popup-content b{display:block;font-size:14px;margin-bottom:2px}
+.leaflet-popup-content .num{font-family:var(--font-data);font-size:12px}
+.leaflet-container a.leaflet-popup-close-button{color:var(--muted)}
+.leaflet-bar a{background:var(--card);color:var(--ink);border-bottom-color:var(--rule)}
+.leaflet-bar a:hover{background:var(--chip)}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--card) 85%,transparent)!important;color:var(--muted)}
+.leaflet-control-scale-line{background:color-mix(in srgb,var(--card) 80%,transparent);color:var(--ink);border-color:var(--ink)}
+.leaflet-control-zoom{margin-top:12px!important;margin-left:12px!important}
+.leaflet-tooltip.hover-tip{background:var(--card);color:var(--ink);border:1px solid var(--rule);border-radius:6px;
+  box-shadow:0 3px 12px rgba(0,0,0,.14);padding:6px 9px;font:13px/1.45 var(--font-body);width:max-content;max-width:280px;white-space:normal}
+.leaflet-tooltip.hover-tip::before{display:none}
+.hover-tip b{display:block;font-size:14px}
+.hover-tip .num{font-family:var(--font-data);font-size:12px}
+.hover-tip .k{color:var(--muted)}
+.leaflet-top-pane svg{pointer-events:none}
+.leaflet-top-pane svg path.leaflet-interactive{pointer-events:visiblePainted}
+.rivbox{right:12px;top:164px;padding:6px 9px 6px 11px;display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500}
+.rivbox label{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none}
+.rivbox input{accent-color:var(--accent);margin:0;width:16px;height:16px}
+.rivbox select{font:inherit;font-size:12.5px;font-weight:400;padding:3px 4px;border:1px solid var(--rule);border-radius:5px;background:var(--card,#fff);color:inherit}
+.rivbox select:disabled{opacity:.45}
+.rivcols{display:flex;gap:5px;padding-left:2px}
+.rivcols button{width:18px;height:18px;border-radius:50%;padding:0;cursor:pointer;border:1px solid rgba(0,0,0,.28);background:var(--c)}
+.rivcols button[aria-checked="true"]{outline:2px solid var(--accent);outline-offset:2px}
+.rivcols button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rivbox:has(input:not(:checked)) .rivcols{opacity:.45}
+.rivbox:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:1px}
+.leaflet-rivers-pane,.leaflet-rivers-pane canvas{pointer-events:none!important}
+.stormbox{right:12px;top:210px;margin:0;padding:6px 8px 7px;display:flex;align-items:center;gap:4px;border:1px solid var(--rule)}
+.stormbox legend{float:left;font-size:12px;color:var(--muted);margin-right:6px;padding:0}
+.stormbox label{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:500;padding:3px 7px;border-radius:5px;cursor:pointer}
+.stormbox label:has(input:checked){background:var(--accent-soft);color:var(--accent)}
+.stormbox input{accent-color:var(--accent);margin:0}
+.stormbox label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:1px}
+.nc-hatch{fill:url(#nc-hatch);fill-opacity:1;stroke:#1e2c30;stroke-width:1.4}
+
+footer.credits{border-top:1px solid var(--rule);padding-block:28px 40px;font-size:13px;color:var(--muted)}
+footer.credits .inner{max-width:900px;display:flex;flex-direction:column;gap:6px}
+footer.credits p{margin:0}
+
+@media (max-width:899px){
+  .story{grid-template-columns:100%}
+  .mapcol{order:-1;height:46vh;height:46svh;border-left:0;border-bottom:1px solid var(--rule);z-index:5}
+  .text{padding-block:0 30vh}
+  .step{min-height:auto;padding-block:30px;margin-left:0;padding-left:14px}
+  .step.short{min-height:auto}
+  .legend{bottom:22px;font-size:12px;padding:8px 10px;max-width:calc(100% - 24px)}
+  .legend .rows{display:grid;grid-template-columns:1fr 1fr;gap:3px 10px}
+  .layers{top:10px;right:10px}
+  .search{top:56px;right:10px;width:calc(100% - 70px)}
+  .hu10toggle{top:104px;right:10px;font-size:12.5px;padding:6px 9px}
+  .rivbox{top:146px;right:10px;font-size:12.5px;padding:5px 8px}
+  .stormbox{top:188px;right:10px;padding:4px 6px}
+  .stormbox legend{display:none}
+  .hero{min-height:56vh}
+}
+@media (prefers-reduced-motion:reduce){.step{transition:none}}
+</style>
+</head>
+<body>
+
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs><pattern id="nc-hatch" patternUnits="userSpaceOnUse" width="7" height="7" patternTransform="rotate(45)">
+    <rect width="7" height="7" fill="#ffffff" fill-opacity="1"/><rect width="2.4" height="7" fill="#1e2c30" fill-opacity=".85"/></pattern></defs>
+</svg>
+
+<header class="hero wrap-x" role="img" aria-label="A rocky river channel in a forested mountain valley in Puerto Rico">
+  <div class="hero-inner">
+    <p class="kicker">NWS San Juan · UPRM · October 2025 | Updated October 2026</p>
+    <h1>Sub-watershed Contribution Index (SWCI)</h1>
+    <p class="dek">Identifying the sub-watersheds that drive flood risk in Puerto Rico</p>
+    <p class="byline">Prepared for Odalys Martínez, NWS San Juan · Luisa Feliciano, UPRM</p>
+  </div>
+</header>
+
+<div class="story">
+  <article class="text wrap-x" id="text">
+
+    <section class="step" data-view="hu12">
+      <p class="lede">This page presents a geospatial analysis aimed at identifying which sub-watersheds contribute most significantly to riverine flood risk in Puerto Rico.</p>
+      <p>By combining terrain models, hydrologic processing tools, and land use data, we created a ranking system for sub-watershed runoff potential, designed to support situational awareness and long-term planning for NWS San Juan.</p>
+    </section>
+
+    <section class="step" data-view="hu12">
+      <h2>But first, what is a sub-watershed?</h2>
+      <p>A sub-watershed is a smaller division of a larger watershed: a geographic area where all rainfall drains to a common point, such as a river, lake, or stream.</p>
+      <figure>
+        <img src="img/subwatershed.webp" width="1400" height="733" alt="Diagram of a sub-watershed: a shaded drainage area bounded by a divide, with branching channels that join at a single outlet on the main river.">
+        <figcaption>Figure 1. A sub-watershed drains through its channels to a single outlet; the divide marks its boundary.</figcaption>
+      </figure>
+      <p>In Puerto Rico, watersheds are organized by the Hydrologic Unit Code (HUC) system:</p>
+      <ul><li><b>HU10:</b> larger watershed areas</li><li><b>HU12:</b> smaller sub-watersheds within HU10s</li></ul>
+      <p>These units are part of the national hydrologic framework used by USGS and other agencies. In this project, we used HU12 boundaries to evaluate runoff potential at a finer scale.</p>
+    </section>
+
+    <section class="step" data-view="hu10only">
+      <h2>Watersheds in Puerto Rico</h2>
+      <p>In Puerto Rico, Hydrologic Unit Code 10 (HU10) watersheds represent medium-scale drainage areas that capture the flow of water from smaller sub-basins into larger river systems. There are 21 HU10 watersheds on the main island (plus three island units for Vieques, Culebra and Isla de Mona), each named after the primary river or geographic feature it encompasses. Some of the most prominent include the Río Grande de Loíza, Río Grande de Arecibo, Río La Plata, Río Culebrinas, Río Guanajibo, and Río Grande de Manatí watersheds. These HU10 units are critical for hydrologic analysis and water resource management, serving as foundational units in flood forecasting, conservation planning, and watershed modeling.</p>
+    </section>
+
+    <section class="step" data-view="hu10">
+      <p>Hydrologic Unit Code 12 (HU12) watersheds in Puerto Rico (in gray) represent the finest level of standardized hydrologic subdivision, capturing highly localized drainage patterns within HU10 units. There are over 200 HU12 sub-watersheds across the island, each delineating a small catchment area that contributes runoff to a specific segment of a river or stream. These sub-watersheds are key to understanding localized flood behavior, land use impacts, and streamflow variability. Examples of HU12 names include Río Cañas Abajo at Ponce, Río Gurabo at Gurabo, Río Bayamón near Bayamón, and Río Blanco at Naguabo. HU12 units are especially useful in high-resolution modeling, site-specific hydrologic assessments, and identifying priority areas for mitigation and sensor placement.</p>
+    </section>
+
+    <section class="step" data-view="dem">
+      <h2>Digital Elevation Model (DEM)</h2>
+      <p>A Digital Elevation Model (DEM) is a raster dataset representing terrain elevation. It serves as the foundation for hydrologic analysis because it determines how water flows across the land surface. We used a 30-m DEM of Puerto Rico for the preliminary SWCI assessment and a 10-m DEM for the enhanced SWCI.</p>
+    </section>
+
+    <section class="step" data-view="dem">
+      <h2>Hydrology toolbox in ArcGIS Pro</h2>
+      <p>The Hydrology toolbox in ArcGIS Pro provides several tools to simulate how water flows over the terrain using digital elevation data. These tools are essential for watershed analysis, identifying stream networks, and understanding flood-prone areas. Figure 2 shows the tools available; the toolbox is useful to:</p>
+      <ul><li>Trace water paths across a surface</li><li>Generate flow accumulation</li><li>Model stream networks</li><li>Support flood modeling and watershed delineation</li></ul>
+      <figure>
+        <img class="narrow" src="img/toolbox.png" width="417" height="787" alt="List of tools in the ArcGIS Pro Hydrology toolbox: Basin, Derive Continuous Flow, Derive Stream As Line, Derive Stream As Raster, Fill, Flow Accumulation, Flow Direction, Flow Distance, Flow Length, Sink, Snap Pour Point, Storage Capacity, Stream Link, Stream Order, Stream to Feature, Watershed.">
+        <figcaption>Figure 2. Tools available in the Hydrology toolbox.</figcaption>
+      </figure>
+    </section>
+
+    <section class="step" data-view="flowdir">
+      <h2>Flow direction</h2>
+      <p>Flow direction determines the direction water would flow from each cell based on the steepest descent.</p>
+      <ul><li>Uses the DEM as input</li><li>Output: a raster where each pixel’s value points toward the steepest downslope neighbor (D8 model)</li></ul>
+      <p>This step is crucial for determining how water travels through terrain.</p>
+      <h3>What is the D8 model?</h3>
+      <p>The D8 model assigns a flow direction to each cell in a raster (such as a DEM) by determining which of its 8 surrounding neighbors has the steepest downward slope. The flow is assumed to go from the center cell (white in the image) to one of its neighbors.</p>
+      <figure>
+        <img class="narrow" src="img/d8.png" width="500" height="498" alt="D8 direction codes around a center cell: east 1, southeast 2, south 4, southwest 8, west 16, northwest 32, north 64, northeast 128.">
+        <figcaption>Figure 3. Standard D8 values used in GIS.</figcaption>
+      </figure>
+      <div class="d8" aria-label="D8 direction codes">
+        <span><i style="background:#c3c3c3"></i>East 1</span><span><i style="background:#f26a2e"></i>Southeast 2</span><span><i style="background:#f4e01e"></i>South 4</span><span><i style="background:#6fb84a"></i>Southwest 8</span>
+        <span><i style="background:#6ccdea"></i>West 16</span><span><i style="background:#5c6fb6"></i>Northwest 32</span><span><i style="background:#a1519d"></i>North 64</span><span><i style="background:#ee3b33"></i>Northeast 128</span>
+      </div>
+      <p>Each of the 8 surrounding directions is assigned a unique value. The center cell “flows” to the neighboring cell with the lowest elevation (or greatest descent), and the flow direction value is stored in the center cell as the number corresponding to the direction it flows toward.</p>
+      <p class="callout"><b>Example:</b> if your DEM shows the lowest elevation is directly south of the current cell, the Flow Direction raster assigns that cell a value of 4.</p>
+    </section>
+
+    <section class="step" data-view="flowacc">
+      <h2>Flow accumulation</h2>
+      <p>Once flow direction is known, Flow Accumulation counts how many cells flow into each cell. This helps identify areas where water tends to collect and where streams are likely to form. High values often indicate channels, rivers, or drainage paths.</p>
+    </section>
+
+    <section class="step" data-view="slope">
+      <h2>Slope</h2>
+      <p>The Slope tool calculates how steep each cell is by comparing its elevation to neighboring cells. Slope influences how fast water moves: steeper slopes generally produce faster runoff and increase erosion potential.</p>
+      <p class="mono">Tool used in ArcGIS Pro: Spatial Analyst → Surface → Slope</p>
+    </section>
+
+    <section class="step" data-view="nwm">
+      <h2>Stream order</h2>
+      <p>Stream order is a way to classify the hierarchy of streams within a watershed. In ArcGIS Pro, stream order can be calculated using the Stream Order tool within the Hydrology toolbox, typically after generating flow direction and flow accumulation rasters.</p>
+      <p>However, for this project, stream order was not calculated. Instead, we used NWM flowlines. These already include an assigned stream order attribute based on national hydrologic datasets, allowing for consistent integration with other model outputs and saving time during preprocessing. Order values range from 1 (headwaters) to higher numbers (6) near the mainstem. Sub-watersheds with higher mean or max stream order are more connected to main river segments and typically handle more cumulative flow, making them strategic points for monitoring.</p>
+    </section>
+
+    <section class="step short" data-view="rios">
+      <p>The following map contains the entire stream network, including rivers and creeks (quebradas).</p>
+    </section>
+
+    <section class="step" data-view="imperv">
+      <h2>Land use as a proxy for impervious surfaces</h2>
+      <p>We used the Land Use shapefile as a proxy to represent impervious areas. Each land use category was given a value between 0 (completely permeable) and 1 (completely impervious). For example:</p>
+      <ul><li>Urban and Road (Vial): 1.0</li><li>Planned Urban: 0.9</li><li>Non-Planned Urban: 0.75</li><li>Rustic: 0.25</li><li>Agriculture: 0.15</li><li>Landscape (Paisaje): 0.10</li><li>Ecological: 0.05</li><li>Water: 0</li></ul>
+      <p>Mixed protected classes take the first match in that order of checks, so "Agrícola y Ecológico" and "Ecológico y Agrícola" count as agricultural (0.15).</p>
+      <p>These scores helped us assign an average imperviousness value to each sub-watershed using Zonal Statistics, and then normalize the results from 0 to 1 to combine with the other layers in the final index.</p>
+    </section>
+
+    <section class="step" data-view="hu_imperv">
+      <h2>Hydrologic Terrain Analysis (static)</h2>
+      <p>The Hydrologic Terrain Analysis combines geospatial indicators to estimate how much each sub-watershed contributes to the main river’s flow. This method is static (it doesn’t depend on real-time rainfall), but it helps identify zones that are structurally more likely to generate runoff.</p>
+      <p>We created a Sub-watershed Contribution Index (SWCI) using four normalized variables from previous maps:</p>
+      <div class="tablebox">
+        <table class="w">
+          <thead><tr><th>Parameter</th><th>Description</th><th>Weight</th></tr></thead>
+          <tbody>
+            <tr><td>Imperviousness (mean)</td><td>From land use data. Higher impervious areas (roads, cities) mean more runoff.</td><td>0.4</td></tr>
+            <tr><td>Average slope (% rise)</td><td>Steeper terrain means faster runoff accumulation. Calculated from the DEM.</td><td>0.3</td></tr>
+            <tr><td>Max stream order</td><td>Higher order indicates proximity to the main river and more cumulative flow.</td><td>0.15</td></tr>
+            <tr><td>Drainage area</td><td>Larger sub-watersheds can collect more rainfall.</td><td>0.15</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="step short" data-view="hu_imperv"><h3>Imperviousness (mean)</h3><p>Mean imperviousness of each sub-watershed, from the land-use scores above.</p></section>
+    <section class="step short" data-view="hu_slope"><h3>Average slope (% rise)</h3><p>Mean slope of each sub-watershed, from the 30-m DEM.</p></section>
+    <section class="step short" data-view="hu_so"><h3>Max stream order</h3><p>Highest NWM stream order found in each sub-watershed.</p></section>
+    <section class="step short" data-view="hu_area"><h3>Drainage area</h3><p>Area of each HU12 sub-watershed.</p></section>
+
+    <section class="step" data-view="swci">
+      <h2>A first, terrain-only index (2025)</h2>
+      <p>The final index combines the four normalized variables, rescaled from 0 (lowest contribution) to 1 (highest). The map groups sub-watersheds by rank: the bottom half, the 50–75% and 75–90% bands, and the top 10%.</p>
+      <p class="callout"><span class="hatch-sw" style="display:inline-block;width:14px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:6px"></span><b>Non-contributing areas</b> are drawn on top of the index. These karst sub-watersheds can score high, but they have no river system to drain them, so they do not contribute to riverine runoff.</p>
+    </section>
+
+    <section class="step" data-view="swci">
+      <h2>Adding rainfall: a storm-based update</h2>
+      <p>The index above describes the terrain. It does not say how much rain falls on each sub-watershed, how much of that rain the soil can hold, or how fast the rest reaches the river. Those three things are what set flood response, and all three can be measured with public data.</p>
+      <p>The next maps rebuild the index around three NOAA design storms: the 2-, 10- and 100-year 24-hour rainfall. Use the <b>Design storm</b> switch on the map to change storms on any storm-based layer.</p>
+    </section>
+
+    <section class="step" data-view="n_rain" data-storm="10">
+      <h2>Design rainfall</h2>
+      <p>NOAA Atlas 14 (Volume 3) gives the 24-hour rainfall expected at each location for a given return period. In Puerto Rico it is far from uniform: the 10-year storm ranges from about 150 mm along the south coast to almost 300 mm in El Yunque and the Cordillera Central.</p>
+      <p>Sub-watershed means: 95–166 mm for the 2-year storm, 149–298 mm for the 10-year storm and 231–617 mm for the 100-year storm.</p>
+    </section>
+
+    <section class="step" data-view="n_cn">
+      <h2>How much rain the ground can take</h2>
+      <p>The NRCS curve number (CN) combines soil and land cover. Each 30-m cell gets its hydrologic soil group from gSSURGO and its land cover from NOAA C-CAP. Low values (forest on deep soils) absorb most of the rain; high values (pavement, clay soils) send most of it to the streams.</p>
+      <p>Sub-watershed averages range from 60 to 87.</p>
+    </section>
+
+    <section class="step" data-view="n_imp">
+      <h2>Measured impervious cover (2022)</h2>
+      <p>Instead of scoring land-use classes, this layer uses NOAA C-CAP's 2022 percent-impervious raster, measured from imagery. It is folded into the curve number as directly connected pavement (CN 98).</p>
+      <p>The median sub-watershed is about 7% impervious; the most urban in San Juan reach 57%.</p>
+    </section>
+
+    <section class="step" data-view="n_q" data-storm="10">
+      <h2>From rainfall to runoff</h2>
+      <p>Rainfall and curve number together give the runoff depth: the part of the storm that does not soak in. A typical sub-watershed turns about half of a 2-year storm into runoff, and about four-fifths of a 100-year storm, because the soil saturates as the storm grows.</p>
+    </section>
+
+    <section class="step" data-view="n_tc">
+      <h2>How fast it arrives</h2>
+      <p>Time of concentration is the time water takes to travel from the farthest point of a sub-watershed to its outlet. It is estimated with the NRCS lag method, using the longest flow path, the average land slope and the curve number. Flow paths and slopes come from the USGS 3DEP 1/3 arc-second (10-m) DEM, the resolution the Puerto Rico H-H guidelines ask for when the lag method is used in steep terrain.</p>
+      <p>Most sub-watersheds respond in 2 to 3 hours. Darker colors are faster.</p>
+    </section>
+
+    <section class="step" data-view="n_flash" data-storm="10">
+      <h2>Flashiness</h2>
+      <p>Dividing runoff depth by time of concentration gives a runoff rate: how much water a sub-watershed sends downstream per hour. Steep, urban and very wet basins stand out. This is the variable that best separates flash flooding from slow, high-volume flooding.</p>
+    </section>
+
+    <section class="step" data-view="n_vol" data-storm="10">
+      <h2>Runoff volume</h2>
+      <p>Runoff depth times area gives the volume of water each sub-watershed produces. This is where size matters, and it is the only place size enters the new index.</p>
+    </section>
+
+    <section class="step" data-view="n_share" data-storm="10">
+      <h2>Following the water downstream</h2>
+      <p>Each sub-watershed drains to another through the WBD routing (ToHUC). Adding volumes down each river gives the share that a sub-watershed contributes to the total water reaching the mouth.</p>
+      <p>Many short rivers, such as Río Humacao and most small coastal streams, fit in a single sub-watershed, so their whole river is one unit (100%, shown in blue-gray). For them, flood risk is a question of depth and speed, not of upstream contribution. Units that drain into the karst sink are shown in pale gray.</p>
+    </section>
+
+    <section class="step" data-view="n_swci" data-storm="10">
+      <h2>The SWCI</h2>
+      <p>The new index averages each sub-watershed's percentile rank in three variables: runoff depth (how much), flashiness (how fast) and runoff volume (how big). It runs from 0 to 1 and is computed separately for each design storm.</p>
+      <p>For the 10-year storm, the highest values are in the Fajardo, Jacaguas–Inabón, Arecibo, Yauco, Añasco and Loíza basins.</p>
+      <p class="callout"><span class="hatch-sw" style="display:inline-block;width:14px;height:10px;border-radius:2px;vertical-align:-1px;margin-right:6px"></span><b>Non-contributing areas</b> stay on top and are excluded from the ranking.</p>
+      <p>To test the weighting, the three variables were reweighted at random 1,000 times. On average 12 to 14 of the top 20 sub-watersheds stayed in the top 20. The terrain-only index under the same test kept 9.</p>
+    </section>
+
+    <section class="step" data-view="n_swci" data-storm="2">
+      <h2>Frequent storms: the metro area</h2>
+      <p>Under the 2-year storm, the wet eastern basins and the metro area lead: the Fajardo coast, the Loíza tributaries and the San Juan lagoons, with a few wet upland units in the Jacaguas–Inabón and Arecibo basins. Where soils and pavement shed water quickly, even modest rain becomes runoff, while deep forested soils still absorb most of it.</p>
+    </section>
+
+    <section class="step" data-view="n_swci" data-storm="100">
+      <h2>Extreme storms: the mountains</h2>
+      <p>Under the 100-year storm, soils saturate and rainfall takes over. The top units move to the steep, wet uplands draining south and west: Jacaguas–Inabón, Yauco, Arecibo and Añasco.</p>
+    </section>
+
+    <section class="step" data-view="n_swci" data-storm="10">
+      <h2>What changed from the initial analysis, and future work</h2>
+      <p>The terrain-only index ranked sub-watersheds mostly by stream order and slope, which describe the drainage network, but not the storm. The SWCI adds the variables that drive runoff, and it shows that the critical sub-watersheds depend on the storm.</p>
+      <p>Limits: the curve number method assumes average antecedent moisture, routing is by volume only (no timing of peaks), and karst infiltration is treated as all-or-nothing. The next step is validation against USGS stream gauges and NWS storm reports.</p>
+    </section>
+
+    <section class="step" data-view="n_swci" id="explore">
+      <h2>Explore the maps</h2>
+      <p>Every layer in this page is available from the menu at the top right of the map. Click a sub-watershed, stream, or land-use polygon for its values.</p>
+    </section>
+  </article>
+
+  <div class="mapcol" aria-label="Map of Puerto Rico">
+    <div id="map"></div>
+    <div class="mapcard layers"><label class="sr" for="layer-select" hidden>Map layer</label><select id="layer-select" aria-label="Map layer"></select></div>
+    <div class="mapcard search" role="search">
+      <input id="river-q" type="search" placeholder="Search rivers and quebradas" autocomplete="off" aria-label="Search rivers and quebradas" aria-controls="river-results">
+      <ul id="river-results" role="listbox" hidden></ul>
+    </div>
+    <label class="mapcard hu10toggle"><input type="checkbox" id="hu10-toggle"> HU10 boundaries</label>
+    <div class="mapcard rivbox"><label><input type="checkbox" id="riv-toggle"> Rivers</label><select id="riv-order" aria-label="Stream orders shown"><option value="1">All streams</option><option value="2">Order 2 and up</option><option value="3">Order 3 and up</option><option value="4">Main rivers (4+)</option><option value="5">Mainstems (5+)</option></select><span class="rivcols" role="radiogroup" aria-label="River color"><button type="button" data-c="#5fd9d4" title="Light teal" aria-label="Light teal"></button><button type="button" data-c="#0b4f9c" title="Dark blue" aria-label="Dark blue"></button><button type="button" data-c="#ffffff" title="White" aria-label="White"></button><button type="button" data-c="#1a1a1a" title="Black" aria-label="Black"></button></span></div>
+    <fieldset class="mapcard stormbox" id="storm-box" hidden><legend>Design storm (24 h)</legend><label><input type="radio" name="storm" value="2"> 2-yr</label><label><input type="radio" name="storm" value="10" checked> 10-yr</label><label><input type="radio" name="storm" value="100"> 100-yr</label></fieldset>
+    <div class="mapcard legend" id="legend" aria-live="polite"></div>
+    <div class="mapcard loading" id="loading" hidden></div>
+  </div>
+</div>
+
+<footer class="credits wrap-x">
+  <div class="inner">
+    <p>Sub-watersheds: USGS Watershed Boundary Dataset (WBD), HU10 and HU12. Funding for the WBD was provided by the USDA-NRCS, USGS and EPA along with other federal, state and local agencies.</p>
+    <p>Stream order: NOAA National Water Model (NWM v2.1) flowlines. Land use: Plan de Uso de Terrenos de Puerto Rico (PUT 2015), Junta de Planificación.</p>
+    <p>Terrain, flow direction, flow accumulation and slope derived from a 30-m DEM of Puerto Rico.</p>
+    <p>Design rainfall: NOAA Atlas 14, Volume 3 (Puerto Rico and the U.S. Virgin Islands). Soils: USDA-NRCS gSSURGO hydrologic soil groups. Land cover and 2022 impervious cover: NOAA Coastal Change Analysis Program (C-CAP). Runoff: NRCS curve number and lag methods (TR-55, NEH Part 630). Time of concentration: flow paths and slopes from the USGS 3DEP 1/3 arc-second DEM (10 m).</p>
+  </div>
+</footer>
+
+<script>
+window.__DATA={};
+function loadData(name){ return new Promise((res,rej)=>{ if(window.__DATA[name]) return res(window.__DATA[name]);
+  const s=document.createElement('script'); s.src='data/'+name.replace(/\.json$/,'.js'); s.onload=()=>res(window.__DATA[name]); s.onerror=()=>rej(new Error('missing '+name)); document.head.appendChild(s); }); }
+</script>
+<script src="lib/leaflet.js"></script>
+<script src="lib/topojson-client.min.js"></script>
+<script>
+const RB = [[17.878902552457824,-67.27256312630682],[18.517352656991857,-65.52654467314429]];      // 30-m rasters (main island)
+const LB = [[17.881243467672398,-67.27144648017466],[18.515971582719498,-65.23193969675235]];          // land-use overview images
+const LU_INDEX = {"c10_1":{"b":[18.08194,-65.57699,18.3021,-65.2521],"obj":"c10_1"},"c10_2":{"b":[18.28184,-65.34574,18.35023,-65.24421],"obj":"c10_2"},"c11_2":{"b":[18.31202,-65.24691,18.33836,-65.23194],"obj":"c11_2"},"c2_2":{"b":[18.32946,-67.27145,18.37176,-67.24365],"obj":"c2_2"},"c3_0":{"b":[17.93115,-67.21535,18.06492,-66.95883],"obj":"c3_0"},"c3_1":{"b":[17.9337,-67.23272,18.32244,-66.97047],"obj":"c3_1"},"c3_2":{"b":[18.28998,-67.27047,18.51597,-66.95561],"obj":"c3_2"},"c4_0":{"b":[17.92691,-67.01382,18.17094,-66.73292],"obj":"c4_0"},"c4_1":{"b":[18.02507,-67.08067,18.36535,-66.67369],"obj":"c4_1"},"c4_2":{"b":[18.25761,-67.04791,18.50202,-66.74313],"obj":"c4_2"},"c5_0":{"b":[17.88124,-66.76951,18.1495,-66.49421],"obj":"c5_0"},"c5_1":{"b":[18.0377,-66.82744,18.32302,-66.4879],"obj":"c5_1"},"c5_2":{"b":[18.26739,-66.79398,18.49432,-66.4731],"obj":"c5_2"},"c6_0":{"b":[17.92361,-66.54617,18.09539,-66.20242],"obj":"c6_0"},"c6_1":{"b":[18.03345,-66.61068,18.36885,-66.20687],"obj":"c6_1"},"c6_2":{"b":[18.24894,-66.53585,18.49432,-66.19898],"obj":"c6_2"},"c7_0":{"b":[17.92356,-66.26222,18.07907,-65.91312],"obj":"c7_0"},"c7_1":{"b":[18.01343,-66.26719,18.31155,-65.99016],"obj":"c7_1"},"c7_2":{"b":[18.2645,-66.31716,18.47708,-65.94162],"obj":"c7_2"},"c8_0":{"b":[17.96772,-66.00869,18.05711,-65.82794],"obj":"c8_0"},"c8_1":{"b":[18.01526,-66.03931,18.3154,-65.73637],"obj":"c8_1"},"c8_2":{"b":[18.2531,-66.04076,18.4607,-65.74732],"obj":"c8_2"},"c9_1":{"b":[18.08041,-65.83053,18.30677,-65.4935],"obj":"c9_1"},"c9_2":{"b":[18.26826,-65.76863,18.40203,-65.60839],"obj":"c9_2"}};
+const IMPERV = {"Agua":0.0,"Suelo Rústico Común":0.25,"Suelo Rústico Especialmente Protegido":0.1,"Suelo Rústico Especialmente Protegido Agrícola":0.15,"Suelo Rústico Especialmente Protegido Agrícola y Ecológico":0.15,"Suelo Rústico Especialmente Protegido Agrícola e Hídrico":0.15,"Suelo Rústico Especialmente Protegido Agrícola y de Paisaje":0.15,"Suelo Rústico Especialmente Protegido Ecológico":0.05,"Suelo Rústico Especialmente Protegido Ecológico y Agrícola":0.15,"Suelo Rústico Especialmente Protegido Ecológico e Hídrico":0.05,"Suelo Rústico Especialmente Protegido Ecológico y de Paisaje":0.05,"Suelo Rústico Especialmente Protegido Hídrico":0.0,"Suelo Rústico Especialmente Protegido de Paisaje":0.1,"Suelo Urbano":1.0,"Suelo Urbanizable No Programado":0.75,"Suelo Urbanizable Programado":0.9,"Vial":1.0};  // PUT description -> imperviousness used in the analysis
+const IMPERV_COLORS = {"0":"#cfe6ee","0.1":"#d6ebcf","0.15":"#b8d9a2","0.25":"#e6d891","0.75":"#c86e48","0.9":"#a2443a","1":"#56282c","0.05":"#e4efd8"};
+const DETAIL_ZOOM = 13;
+const ISLAND = [[17.87,-67.3],[18.53,-65.2]];
+
+const RAMP = ['#f0f921','#fca636','#e16462','#b12a90','#6a00a8','#0d0887']; // plasma, low -> high
+function rampN(n){ if(n===6) return RAMP; const rgb=RAMP.map(h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)));
+  return Array.from({length:n},(_,k)=>{ const t=k/(n-1)*(RAMP.length-1), i=Math.min(RAMP.length-2,Math.floor(t)), f=t-i;
+    return '#'+rgb[i].map((c,j)=>Math.round(c+(rgb[i+1][j]-c)*f).toString(16).padStart(2,'0')).join(''); }); }
+const fmt = (d)=>v=>v==null||isNaN(v)?'–':Number(v).toLocaleString('en-US',{maximumFractionDigits:d,minimumFractionDigits:d});
+
+// ---------- Design storm ----------
+let storm='10';
+const SINGLE='#8fb2c0', KARST='#b9c6c2';
+const isTrue=v=>v===true||v==='True'||v==='true'||v===1;
+const yr=()=>`${storm}-yr`;
+const cls=(arr,u)=>arr.map((b,i)=>[b, i===0?`≤ ${b}${u}`:(b>=1e9?`> ${arr[i-1]}${u}`:`${arr[i-1]} – ${b}${u}`)]);
+const STORM={
+  '2':  {rainBar:[90,132,175], qBar:[20,80,140], v:[0.5,1,2,4,8,1e9],  flash:[15,25,35,50,100,1e9]},
+  '10': {rainBar:[140,225,310],qBar:[40,160,280],v:[1,2.5,5,10,20,1e9], flash:[30,50,75,110,200,1e9]},
+  '100':{rainBar:[220,425,630],qBar:[120,360,600],v:[2.5,5,10,20,40,1e9],flash:[70,100,140,200,350,1e9]}};
+const bar=(g,e,u)=>`<div class="bar" style="background:${g}"></div><div class="ends"><span>${e[0]}${u}</span><span>${e[1]}${u}</span><span>${e[2]}${u}</span></div>`;
+const GRAD_PL='linear-gradient(90deg,#f0f921,#fca636,#e16462,#b12a90,#6a00a8,#0d0887)';
+const GRAD_BL='linear-gradient(90deg,#e9f3f7,#9ccbe3 30%,#3d8dc4 60%,#0a2f63)';
+
+// ---------- Views ----------
+const VIEWS = {
+  hu12:   {label:'HU12 sub-watersheds', base:true, vec:['hu12lines']},
+  hu10only:{label:'HU10 watersheds', base:true, vec:['hu10fill','hu10lines']},
+  hu10:   {label:'HU10 and HU12 watersheds', base:true, vec:['hu10fill','hu12lines','hu10lines']},
+  dem:    {label:'Elevation (30-m DEM)', img:'dem'},
+  flowdir:{label:'Flow direction (D8)', img:'flowdir'},
+  flowacc:{label:'Flow accumulation', img:'flowacc'},
+  slope:  {label:'Slope (% rise)', img:'slope'},
+  nwm:    {label:'NWM stream order', base:true, vec:['hu12faint','nwm']},
+  rios:   {label:'Rivers and creeks', base:true, vec:['rios']},
+  imperv: {label:'Land-use imperviousness', lu:'imperv', vec:['hu12faint']},
+  putclasses:{label:'Land use (PUT classes)', lu:'put', vec:['hu12faint']},
+  hu_imperv:{label:'Imperviousness (mean)', base:true, choro:{f:'imperv',fmt:fmt(2),unit:'',
+    classes:[[0.255,'0.00 – 0.25'],[0.405,'0.26 – 0.40'],[0.505,'0.41 – 0.50'],[0.655,'0.51 – 0.65'],[1,'0.66 – 1.00']]}},
+  hu_slope:{label:'Average slope (% rise)', base:true, choro:{f:'slope_mean',fmt:fmt(1),unit:'%',
+    classes:[[5.945,'0.00 – 5.94'],[11.005,'5.95 – 11.00'],[15.315,'11.01 – 15.31'],[18.985,'15.32 – 18.98'],[22.125,'18.99 – 22.12'],[25.255,'22.13 – 25.25'],[28.925,'25.26 – 28.92'],[33.235,'28.93 – 33.23'],[38.295,'33.24 – 38.29'],[99,'38.30 – 44.23']]}},
+  hu_so:  {label:'Max stream order', base:true, choro:{f:'so_max',fmt:fmt(0),unit:'',discrete:[1,2,3,4,5,6]}},
+  hu_area:{label:'Drainage area', base:true, choro:{f:'AreaSqKm',fmt:fmt(1),unit:' km²',
+    classes:[[15.435,'0.89 – 15.43'],[21.565,'15.44 – 21.56'],[36.105,'21.57 – 36.10'],[70.585,'36.11 – 70.58'],[152.345,'70.59 – 152.34'],[1e9,'152.35 – 346.23']]}},
+  hu_acc: {label:'Flow accumulation share', base:true, choro:{f:'acc_pct',fmt:fmt(2),unit:'%',
+    classes:[[0.25,'0.0 – 0.2 %'],[0.55,'0.3 – 0.5 %'],[1.15,'0.6 – 1.1 %'],[2.05,'1.2 – 2.0 %'],[4.05,'2.1 – 4.0 %'],[1e9,'4.1 – 8.0 %']]}},
+  n_rain: {storm:1, img:'rain', dyn:()=>({label:`${yr()} 24-h rainfall (Atlas 14)`, img:'rain'+storm, legendHTML:bar(GRAD_BL,STORM[storm].rainBar,' mm')})},
+  n_cn:   {img:'cn', dyn:()=>({label:'Curve number (30 m)', legendHTML:bar(GRAD_PL,[55,76,98],'')})},
+  n_imp:  {img:'imperv22', dyn:()=>({label:'Impervious cover 2022 (30 m)', legendHTML:bar('linear-gradient(90deg,#f6f4ee,#e4d6b5 15%,#c98a5a 40%,#8c3b30 70%,#3a1517)',[0,50,100],' %')})},
+  n_q:    {storm:1, img:'q', dyn:()=>({label:`${yr()} runoff depth (30 m)`, img:'q'+storm, legendHTML:bar(GRAD_PL,STORM[storm].qBar,' mm')})},
+  n_tc:   {base:true, vec:['noncontrib'], dyn:()=>({label:'Time of concentration', choro:{f:'tc_h',fmt:fmt(1),unit:' h',reverse:true,note:'Darker = faster response',classes:cls([1,2,3,4.5,1e9],' h')}})},
+  n_flash:{storm:1, base:true, vec:['noncontrib'], dyn:()=>({label:`Flashiness (${yr()})`, choro:{f:'flash'+storm,fmt:fmt(0),unit:' mm/h',note:'Runoff depth ÷ time of concentration',classes:cls(STORM[storm].flash,' mm/h')}})},
+  n_vol:  {storm:1, base:true, vec:['noncontrib'], dyn:()=>({label:`${yr()} runoff volume`, choro:{f:'v'+storm+'_hm3',fmt:fmt(1),unit:' hm³',classes:cls(STORM[storm].v,' hm³')}})},
+  n_share:{storm:1, base:true, vec:['noncontrib'], dyn:()=>({label:'Share of its river at the mouth', choro:{f:'share'+storm,fmt:fmt(1),unit:' %',share:true,note:`Share of the ${yr()} runoff volume reaching the river mouth`,classes:cls([5,10,20,35,50,1e9],' %')}})},
+  n_swci: {storm:1, base:true, vec:['noncontrib'], dyn:()=>({label:`SWCI (${yr()})`, choro:{f:'rci'+storm,fmt:fmt(2),unit:'',note:'Average percentile of runoff depth, flashiness and runoff volume',classes:cls([0.3,0.45,0.55,0.65,0.75,1e9],'')}})},
+  swci:   {label:'Terrain-only index (2025)', base:true, choro:{f:'n_score',fmt:fmt(2),unit:'',
+    note:'Classes by rank: bottom half, 50–75%, 75–90%, top 10%',classes:[[0.627461,'Bottom 50% (0.00 – 0.63)'],[0.738507,'50–75% (0.63 – 0.74)'],[0.809366,'75–90% (0.74 – 0.81)'],[1,'Top 10% (0.81 – 1.00)']]}, vec:['noncontrib']},
+};
+const ORDER = ['hu12','hu10only','hu10','dem','flowdir','flowacc','slope','nwm','rios','imperv','putclasses','hu_imperv','hu_slope','hu_so','hu_area','hu_acc','swci',
+               'n_rain','n_cn','n_imp','n_q','n_tc','n_flash','n_vol','n_share','n_swci'];
+// Resolve a view for the current storm
+const V = id => { const b=VIEWS[id]; return b.dyn ? Object.assign({}, b, b.dyn()) : b; };
+
+// ---------- Map ----------
+const map = L.map('map',{zoomSnap:0.25,minZoom:8,maxZoom:17,maxBounds:[[17.3,-68.4],[19,-64.6]],preferCanvas:true});
+// One shared canvas for every vector layer, so hit-testing sees all of them in drawing order
+const vecRenderer = L.canvas({pane:'vec',padding:0.3,tolerance:5});
+// Hover: sticky tooltip plus a highlight, reset on leave
+const canHover = matchMedia('(hover: hover)').matches;
+const tipOpts = {sticky:true,direction:'top',offset:[0,-10],className:'hover-tip',opacity:1};
+function tip(l, html){ if(canHover) l.bindTooltip(html, tipOpts); }
+function hover(group, l, html, hi){
+  if(!canHover) return;
+  l.bindTooltip(html,{sticky:true,direction:'top',offset:[0,-10],className:'hover-tip',opacity:1});
+  if(hi){ l.on('mouseover',()=>{ l.setStyle(hi(l)); if(l.bringToFront) l.bringToFront(); });
+          l.on('mouseout',()=>group().resetStyle(l)); }
+}
+map.attributionControl.setPrefix(false);
+// Keep popups clear of the controls in the top-right corner: pan the map so the popup sits left of them
+function popupPad(){
+  const cards=[...document.querySelectorAll('.layers,.stormbox,.search,.hu10toggle,.rivbox')].filter(e=>e.offsetParent);
+  const w=cards.reduce((m,e)=>Math.max(m,e.offsetWidth),0);
+  L.Popup.mergeOptions({autoPan:true, autoPanPaddingTopLeft:L.point(16,16), autoPanPaddingBottomRight:L.point(w+28,16)});
+}
+popupPad(); addEventListener('resize',popupPad);
+L.control.scale({imperial:false,position:'bottomright'}).addTo(map);
+['base','img','lu','vec','top'].forEach((p,i)=>map.createPane(p).style.zIndex=300+i*20);
+map.getPane('top').style.zIndex=640;
+const fitIsland = ()=>map.fitBounds(ISLAND,{padding:[8,8]});
+fitIsland();
+requestAnimationFrame(()=>{map.invalidateSize();fitIsland();});
+new ResizeObserver(()=>map.invalidateSize()).observe(document.getElementById('map'));
+
+const loadingEl = document.getElementById('loading');
+let pending = 0;
+function busy(d){ pending+=d; loadingEl.hidden = pending<=0; loadingEl.textContent='Loading map data…'; }
+async function getTopo(url,quiet){
+  if(!quiet) busy(1);
+  try{ const t=await loadData(url);
+       return topojson.feature(t,t.objects[Object.keys(t.objects)[0]]); }
+  finally{ if(!quiet) busy(-1); }
+}
+const once = {}; const cached = (k,fn)=> once[k] ??= fn();
+
+// Raster images
+const IMG = {
+  base:L.imageOverlay('base.webp',RB,{pane:'base',interactive:false}),
+  dem:L.imageOverlay('dem.webp',RB,{pane:'img',interactive:false}),
+  slope:L.imageOverlay('slope.webp',RB,{pane:'img',interactive:false}),
+  flowacc:L.imageOverlay('flowacc.webp',RB,{pane:'img',interactive:false}),
+  flowdir:L.imageOverlay('flowdir.png',RB,{pane:'img',interactive:false,className:'pixelated'}),
+};
+const pixStyle=document.createElement('style'); pixStyle.textContent='.pixelated{image-rendering:pixelated}'; document.head.appendChild(pixStyle);
+
+// HU12 data (all analysis fields)
+let HU = null;
+const huReady = cached('hu',()=>getTopo('hu12.json').then(fc=>HU=fc));
+const ranked = {};
+function rankOf(f,huc){
+  if(!ranked[f]){ const arr=HU.features.filter(x=>x.properties[f]!=null).sort((a,b)=>b.properties[f]-a.properties[f]);
+    ranked[f]=new Map(arr.map((x,i)=>[x.properties.HUC12,i+1])); }
+  return ranked[f].get(huc);
+}
+function quantBreaks(f){
+  const v=HU.features.map(x=>x.properties[f]).filter(x=>x!=null&&!isNaN(x)).sort((a,b)=>a-b);
+  const q=p=>v[Math.min(v.length-1,Math.floor(p*(v.length-1)))];
+  return [0,1,2,3,4,5,6].map(i=>q(i/6));
+}
+function classIdx(v,br){ for(let i=1;i<br.length;i++) if(v<=br[i]) return i-1; return br.length-2; }
+
+const huLabel = p=>`<b>${p.Name||'Unnamed'}</b><span class="num">HUC ${p.HUC12}</span><br>`;
+
+// Vector layer builders
+const VEC = {
+  hu12lines: ()=>huReady.then(()=>{ const g=L.geoJSON(HU,{pane:'vec',renderer:vecRenderer,style:{color:'#6e7d80',weight:0.8,fill:true,fillOpacity:0,opacity:.9},
+      onEachFeature:(f,l)=>{ const h=()=>`${huLabel(f.properties)}<span class="k">Area</span> <span class="num">${fmt(1)(f.properties.AreaSqKm)} km²</span><br><span class="k">HU10</span> <span class="num">${f.properties.HUC12.slice(0,10)}</span>`;
+        l.bindPopup(h); hover(()=>g,l,h,()=>({color:'#16252a',weight:2.4,fillColor:'#1b6a78',fillOpacity:.12})); }}); return g; }),
+  hu12faint: ()=>huReady.then(()=>L.geoJSON(HU,{pane:'vec',renderer:vecRenderer,interactive:false,style:{color:'#41545a',weight:0.6,fill:false,opacity:.45}})),
+  hu10fill: ()=>cached('hu10',()=>getTopo('hu10.json')).then(fc=>{
+      const pal=['#bfdadd','#e8d6b4','#cfe2bd','#e7c6cb','#c9cde9','#efe2a6'];
+      const isl={'2101000601':'Vieques','2101000602':'Culebra','2101000603':'Isla de Mona'};
+      const g=L.geoJSON(fc,{pane:'vec',renderer:vecRenderer,style:(f)=>({fillColor:pal[f.properties.c%pal.length],fillOpacity:.9,stroke:false}),
+        onEachFeature:(f,l)=>{ const p=f.properties; const h=()=>`<b>HU10 watershed${isl[p.HUC10]?' · '+isl[p.HUC10]:''}</b><span class="num">HUC ${p.HUC10}</span><br><span class="num">${p.n}</span> <span class="k">HU12 sub-watersheds ·</span> <span class="num">${fmt(0)(p.km2)} km²</span>`;
+          l.bindPopup(h); hover(()=>g,l,h,()=>({fillOpacity:1,stroke:true,color:'#16252a',weight:1.5})); }}); return g; }),
+  hu10lines: ()=>cached('hu10',()=>getTopo('hu10.json')).then(fc=>L.geoJSON(fc,{pane:'vec',renderer:vecRenderer,interactive:false,style:{color:'#1d3a40',weight:2.2,fill:false}})),
+  nwm: ()=>cached('nwm',()=>getTopo('nwm.json')).then(fc=>{
+      const W=[0,0.6,0.9,1.4,2,2.8,3.8], C=[0,'#9cc9e0','#6aaed6','#3d8dc4','#2266a8','#124a8a','#0a2f63'];
+      const g=L.geoJSON(fc,{pane:'vec',renderer:vecRenderer,style:f=>{const o=f.properties.strm_order||1;return {color:C[o]||C[1],weight:W[o]||1,opacity:1,lineCap:'round'};},
+        onEachFeature:(f,l)=>{ const p=f.properties; const h=()=>`<b>${fixName(p.name)||'Unnamed reach'}</b><span class="k">Stream order</span> <span class="num">${p.strm_order}</span>`;
+          l.bindPopup(h); hover(()=>g,l,h,()=>({color:'#e8590c',weight:(W[p.strm_order]||1)+2.5})); }}); return g; }),
+  rios: ()=>cached('rios',()=>getTopo('rios.json')).then(fc=>{
+      const WN=[1.1,1.5,2.1,2.9], WU=[0.6,0.8,1.2,1.7];
+      RIOS.byInst = new Map(); RIOS.fc = fc;
+      const unnamedStyle=f=>({color:'#6aa8d4',weight:WU[f.properties.w]||.6,opacity:.95});
+      const unnamed=L.geoJSON({type:'FeatureCollection',features:fc.features.filter(f=>f.geometry&&!f.properties.n)},
+        {pane:'vec',renderer:vecRenderer,interactive:false,style:unnamedStyle});
+      const g=L.geoJSON({type:'FeatureCollection',features:fc.features.filter(f=>f.geometry&&f.properties.n)},{pane:'vec',renderer:vecRenderer,
+      style:f=>{ const p=f.properties; return p.n ? {color:'#1f63a5',weight:WN[p.w]||1.1,opacity:1} : {color:'#6aa8d4',weight:WU[p.w]||.6,opacity:.95}; },
+      onEachFeature:(f,l)=>{ const p=f.properties, n=p.n;
+        RIOS.byInst.set(p.inst,l);
+        const h=()=>`<b>${n}</b><span class="k">${p.hu?`Outlet in the ${p.hu} sub-watershed`:''}</span>${p.hu?'<br>':''}<span class="k">Length</span> <span class="num">${fmt(1)(p.km)} km</span>`;
+        l.bindPopup(h); hover(()=>g,l,h,()=>({color:'#e8590c',weight:WN[p.w]+2})); }});
+      RIOS.group = g; return L.layerGroup([unnamed,g]); }),
+  noncontrib: ()=>cached('nc',()=>getTopo('noncontrib.json')).then(fc=>L.geoJSON(fc,{pane:'top',renderer:L.svg({pane:'top'}),
+      style:{className:'nc-hatch'},
+      onEachFeature:(f,l)=>{ tip(l,()=>`<b>Non-contributing area (karst)</b><span class="num">HUC ${f.properties.HUC12} · ${fmt(1)(f.properties.AreaSqKm)} km²</span>`,tipOpts);
+        l.bindPopup(()=>{ const p=HU&&HU.features.find(x=>x.properties.HUC12===f.properties.HUC12)?.properties;
+        return `<b>Non-contributing area</b><span class="num">HUC ${f.properties.HUC12}</span><br>Karst sub-watershed with no river system draining it.${p?`<br>SWCI <span class="num">${fmt(2)(p.n_score)}</span> (not used as a contributor)`:''}`; }); }})),
+};
+const RIOS = {byInst:new Map(), group:null, fc:null, hl:null};
+function fixName(s){ try{ return s && /Ã/.test(s) ? decodeURIComponent(escape(s)) : s; }catch(_){ return s; } }
+
+// Choropleth
+function choroLayer(c){
+  return huReady.then(()=>{
+    let pal = c.classes ? rampN(c.classes.length) : RAMP; if(c.reverse) pal=pal.slice().reverse(); c._pal=pal;
+    const toKarst=p=>!isTrue(p.noncontrib) && /^Non-contributing/i.test(p.outlet_name||'');
+    const col = (v,p) => { if(c.share){ if(toKarst(p)) return KARST; if(isTrue(p.single)) return SINGLE; }
+      if(v==null||v===''||isNaN(v)) return '#cfd6d6';
+      if(c.discrete) return RAMP[Math.max(0,Math.min(5,v-1))];
+      const i=c.classes.findIndex(([hi])=>v<=hi); return pal[i<0?pal.length-1:i]; };
+    const valText=p=>{ if(c.share){ if(isTrue(p.noncontrib)) return 'none (karst)'; if(toKarst(p)) return 'drains into the karst'; if(isTrue(p.single)) return '100 % (whole river)'; }
+      const x=p[c.f]; return (x==null||x===''||isNaN(x)) ? '–' : c.fmt(x)+c.unit; };
+    const g=L.geoJSON(HU,{pane:'vec',renderer:vecRenderer,style:f=>({fillColor:col(f.properties[c.f],f.properties),fillOpacity:1,color:'#ffffff',weight:0.6,opacity:.9}),
+      onEachFeature:(f,l)=>{ const h=()=>{ const p=f.properties, r=c.share?null:rankOf(c.f,p.HUC12);
+        return `${huLabel(p)}${p.hu10?`<span class="k">${p.hu10}</span><br>`:''}<span class="k">${V(current).label}:</span> <span class="num">${valText(p)}</span>${r?`<br><span class="k">Rank</span> <span class="num">${r}</span> <span class="k">of ${ranked[c.f].size}</span>`:''}`; };
+        l.bindPopup(h); hover(()=>g,l,h,()=>({color:'#16252a',weight:2.4})); }});
+    return g;
+  });
+}
+
+// Land use (overview image + detail chunks)
+const LU_IMG = { put:L.imageOverlay('lu_overview.png',LB,{pane:'lu',interactive:false}),
+                 imperv:L.imageOverlay('imperv_overview.png',LB,{pane:'lu',interactive:false}) };
+const LU_CLASSES = [['Urbano','#c0503b'],['Vial','#5f5f5f'],['Urbanizable programado','#e8935a'],['Urbanizable no programado','#f3c48f'],['Rústico común','#d8cd8c'],
+  ['SREP Agrícola','#a9c76f'],['SREP Ecológico','#3e7b4f'],['SREP Hídrico','#57a6c4'],['SREP Paisaje','#b9a3d4'],['SREP (general)','#86b3a0'],['Agua','#2c6ea6']];
+const PUT_COLOR = Object.fromEntries(LU_CLASSES);
+const luRenderer = vecRenderer;
+const luDetail = L.layerGroup(); const chunks={}, chunkLoading={};
+let luMode = null;
+function luStyle(f){
+  const c = luMode==='imperv' ? (IMPERV_COLORS[String(IMPERV[f.properties.DESCRIPPUT])] || '#bbb') : (PUT_COLOR[f.properties.g]||'#bbb');
+  return {fillColor:c,fillOpacity:1,color:c,weight:0.4};
+}
+async function loadChunk(k){
+  if(chunks[k]||chunkLoading[k]) return; chunkLoading[k]=1; busy(1);
+  try{ const t=await loadData('lu/'+k+'.json');
+    chunks[k]=L.geoJSON(topojson.feature(t,t.objects[LU_INDEX[k].obj]),{renderer:luRenderer,pane:'vec',style:luStyle,
+      onEachFeature:(f,l)=>{ const h=()=>`<b>${f.properties.DESCRIPPUT}</b><span class="k">${f.properties.Municipio}</span><br><span class="k">Imperviousness used:</span> <span class="num">${fmt(2)(IMPERV[f.properties.DESCRIPPUT])}</span>`;
+        l.bindPopup(h); tip(l,h); }});
+    if(luMode){ luDetail.addLayer(chunks[k]); active.forEach(l=>l.bringToFront&&l.bringToFront()); }
+  }catch(e){} finally{ delete chunkLoading[k]; busy(-1); }
+}
+function syncLU(){
+  const on = !!luMode;
+  Object.entries(LU_IMG).forEach(([k,l])=>{ const want = on && k===luMode; if(want&&!map.hasLayer(l)) l.addTo(map); if(!want&&map.hasLayer(l)) map.removeLayer(l); });
+  const detail = on && map.getZoom()>=DETAIL_ZOOM;
+  if(detail){ if(!map.hasLayer(luDetail)) luDetail.addTo(map);
+    const b=map.getBounds().pad(0.1);
+    Object.keys(LU_INDEX).forEach(k=>{ const [s,w,n,e]=LU_INDEX[k].b; if(b.intersects([[s,w],[n,e]])) loadChunk(k); });
+  } else if(map.hasLayer(luDetail)) map.removeLayer(luDetail);
+}
+map.on('moveend',syncLU);
+
+// ---------- River labels along the lines ----------
+const labelPane = map.createPane('labels'); labelPane.style.zIndex=645; labelPane.style.pointerEvents='none';
+const labelCanvas = L.DomUtil.create('canvas','',labelPane); const lctx = labelCanvas.getContext('2d');
+function drawLabels(){
+  const size=map.getSize(), dpr=window.devicePixelRatio||1;
+  labelCanvas.width=size.x*dpr; labelCanvas.height=size.y*dpr; labelCanvas.style.width=size.x+'px'; labelCanvas.style.height=size.y+'px';
+  L.DomUtil.setPosition(labelCanvas, map.containerPointToLayerPoint([0,0]));
+  lctx.setTransform(dpr,0,0,dpr,0,0); lctx.clearRect(0,0,size.x,size.y);
+  if(current!=='rios' || !RIOS.fc) return;
+  const z=map.getZoom(); if(z<11) return;
+  const minW = z<11.5 ? 2 : z<12.5 ? 1 : 0;
+  const b=map.getBounds().pad(0.05), spacing = z>=14 ? 300 : 380;
+  lctx.font='italic 500 13.5px "Instrument Sans", system-ui, sans-serif'; lctx.textBaseline='middle'; lctx.textAlign='center';
+  lctx.lineJoin='round'; lctx.lineWidth=3.5; lctx.strokeStyle='rgba(255,255,255,.92)'; lctx.fillStyle='#174a7c';
+  const placed=[];
+  const hits=(r)=>placed.some(q=>r[0]<q[2]&&r[2]>q[0]&&r[1]<q[3]&&r[3]>q[1]);
+  const feats=RIOS.fc.features.filter(f=>f.geometry && f.properties.n && f.properties.w>=minW).sort((a,c)=>c.properties.w-a.properties.w);
+  for(const f of feats){
+    const g=f.geometry, parts = g.type==='LineString'?[g.coordinates]:g.coordinates;
+    let count=0;
+    for(const coords of parts){
+      if(coords.length<2) continue;
+      // quick bounds test
+      let inb=false; for(let i=0;i<coords.length;i+=Math.max(1,coords.length>>3)) if(b.contains([coords[i][1],coords[i][0]])){inb=true;break;}
+      if(!inb) continue;
+      const pts=coords.map(c=>map.latLngToContainerPoint([c[1],c[0]]));
+      const cum=[0]; for(let i=1;i<pts.length;i++) cum.push(cum[i-1]+pts[i].distanceTo(pts[i-1]));
+      const total=cum[cum.length-1]; const text=f.properties.n; const L0=lctx.measureText(text).width+10;
+      if(total<L0*1.15) continue;
+      const at=(d)=>{ let i=1; while(i<cum.length-1 && cum[i]<d) i++; const t=(d-cum[i-1])/((cum[i]-cum[i-1])||1); return L.point(pts[i-1].x+(pts[i].x-pts[i-1].x)*t, pts[i-1].y+(pts[i].y-pts[i-1].y)*t); };
+      for(let d=L0/2+4; d<total-L0/2 && count<5; ){
+        const p1=at(d-L0/2), p2=at(d+L0/2), chord=p1.distanceTo(p2);
+        if(chord < L0*0.8){ d+=22; continue; }        // too curvy here, slide along
+        const cx=(p1.x+p2.x)/2, cy=(p1.y+p2.y)/2;
+        if(cx<10||cy<10||cx>size.x-10||cy>size.y-10){ d+=22; continue; }
+        let ang=Math.atan2(p2.y-p1.y,p2.x-p1.x); if(ang>Math.PI/2) ang-=Math.PI; if(ang<-Math.PI/2) ang+=Math.PI;
+        const hw=L0/2, hh=9, ca=Math.abs(Math.cos(ang)), sa=Math.abs(Math.sin(ang));
+        const ex=hw*ca+hh*sa, ey=hw*sa+hh*ca, r=[cx-ex,cy-ey,cx+ex,cy+ey];
+        if(hits(r)){ d+=22; continue; }
+        placed.push(r); count++; d+=spacing;
+        lctx.save(); lctx.translate(cx,cy); lctx.rotate(ang); lctx.strokeText(text,0,0); lctx.fillText(text,0,0); lctx.restore();
+      }
+    }
+  }
+}
+map.on('moveend zoomend resize', drawLabels);
+map.on('zoomstart', ()=>{ lctx.clearRect(0,0,labelCanvas.width,labelCanvas.height); });
+
+// ---------- River search ----------
+const qEl=document.getElementById('river-q'), resEl=document.getElementById('river-results');
+let RIDX=null, sel_i=-1, lastRes=[];
+const norm=s=>s.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+async function loadIdx(){ if(!RIDX){ try{ RIDX=(await loadData('rios_index.json')).map(r=>({n:r[0],hu:r[1],km:r[2],inst:r[3],b:r[4],k:norm(r[0])})); }catch(e){ RIDX=[]; } } return RIDX; }
+function renderResults(){
+  const q=norm(qEl.value.trim());
+  if(!q){ resEl.hidden=true; return; }
+  const words=q.split(/\s+/);
+  lastRes=RIDX.filter(r=>words.every(w=>r.k.includes(w))).sort((a,c)=>(c.k.startsWith(q)-a.k.startsWith(q))||c.km-a.km).slice(0,15);
+  sel_i=-1;
+  resEl.innerHTML = lastRes.length ? lastRes.map((r,i)=>`<li role="option" id="rr${i}" data-i="${i}"><b>${r.n}</b><span>${r.hu?r.hu+' · ':''}${fmt(1)(r.km)} km</span></li>`).join('')
+                                   : `<li class="none">No river or quebrada matches “${qEl.value.trim()}”.</li>`;
+  resEl.hidden=false;
+}
+async function goRiver(r){
+  resEl.hidden=true; qEl.value=r.n; qEl.blur();
+  await show('rios'); await cached('rios',()=>getTopo('rios.json'));
+  for(let t=0;t<20 && !RIOS.byInst.get(r.inst);t++) await new Promise(s=>setTimeout(s,100));
+  map.fitBounds([[r.b[0],r.b[1]],[r.b[2],r.b[3]]],{padding:[50,50],maxZoom:14});
+  const l=RIOS.byInst.get(r.inst); if(!l) return;
+  if(RIOS.hl && RIOS.group) RIOS.group.resetStyle(RIOS.hl);
+  l.setStyle({color:'#e8590c',weight:4}); l.bringToFront(); RIOS.hl=l;
+  setTimeout(()=>l.openPopup(l.getCenter ? l.getCenter() : undefined), 450);
+}
+qEl.addEventListener('focus',loadIdx);
+qEl.addEventListener('input',async()=>{ await loadIdx(); renderResults(); });
+qEl.addEventListener('keydown',e=>{
+  if(resEl.hidden||!lastRes.length){ if(e.key==='Escape'){ qEl.value=''; resEl.hidden=true; } return; }
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){ e.preventDefault(); sel_i=(sel_i+(e.key==='ArrowDown'?1:-1)+lastRes.length)%lastRes.length;
+    [...resEl.children].forEach((li,i)=>li.setAttribute('aria-selected',i===sel_i)); resEl.children[sel_i].scrollIntoView({block:'nearest'}); }
+  else if(e.key==='Enter'){ e.preventDefault(); goRiver(lastRes[Math.max(0,sel_i)]); }
+  else if(e.key==='Escape'){ resEl.hidden=true; }
+});
+resEl.addEventListener('click',e=>{ const li=e.target.closest('li[data-i]'); if(li) goRiver(lastRes[+li.dataset.i]); });
+document.addEventListener('click',e=>{ if(!e.target.closest('.search')) resEl.hidden=true; });
+L.DomEvent.disableClickPropagation(document.querySelector('.search')); L.DomEvent.disableScrollPropagation(document.querySelector('.search'));
+
+// ---------- HU10 boundary overlay (all views) ----------
+const boundsPane = map.createPane('bounds'); boundsPane.style.zIndex=642; boundsPane.style.pointerEvents='none';
+const boundsRenderer = L.svg({pane:'bounds'});
+const huToggle = document.getElementById('hu10-toggle');
+let hu10Overlay = null;
+async function syncHU10(){
+  const on = huToggle.checked;
+  try{ localStorage.setItem('hu10-overlay', on?'1':'0'); }catch(_){}
+  if(on && !hu10Overlay){
+    const fc = await cached('hu10',()=>getTopo('hu10.json'));
+    hu10Overlay = L.layerGroup([
+      L.geoJSON(fc,{pane:'bounds',renderer:boundsRenderer,interactive:false,style:{color:'#0d1a1d',weight:4.2,opacity:.35,fill:false,lineJoin:'round'}}),
+      L.geoJSON(fc,{pane:'bounds',renderer:boundsRenderer,interactive:false,style:{color:'#ffffff',weight:2.2,opacity:1,fill:false,lineJoin:'round'}})
+    ]);
+  }
+  if(hu10Overlay){ if(on && !map.hasLayer(hu10Overlay)) hu10Overlay.addTo(map); if(!on && map.hasLayer(hu10Overlay)) map.removeLayer(hu10Overlay); }
+}
+try{ huToggle.checked = localStorage.getItem('hu10-overlay')==='1'; }catch(_){}
+huToggle.addEventListener('change', syncHU10);
+L.DomEvent.disableClickPropagation(document.querySelector('.hu10toggle'));
+syncHU10();
+
+// ---------- River network overlay (all views) ----------
+const rivPane = map.createPane('rivers'); rivPane.style.zIndex=643; rivPane.style.pointerEvents='none'; rivPane.classList.add('leaflet-rivers-pane');
+const rivRenderer = L.canvas({pane:'rivers', padding:0.3});
+const rivToggle=document.getElementById('riv-toggle'), rivOrder=document.getElementById('riv-order');
+const RIV_W=[0,0.5,0.75,1.1,1.6,2.2,2.9];
+const rivPromises={}, rivLayers={};
+let rivColor='#5fd9d4';
+const rivBtns=[...document.querySelectorAll('.rivcols button')];
+rivBtns.forEach(b=>b.style.setProperty('--c',b.dataset.c));
+function setRivColor(c){
+  rivColor=c; rivBtns.forEach(b=>b.setAttribute('aria-checked', b.dataset.c===c?'true':'false'));
+  try{ localStorage.setItem('riv-color',c); }catch(_){}
+  Object.values(rivLayers).forEach(l=>l.setStyle({color:c}));
+}
+rivBtns.forEach(b=>b.addEventListener('click',()=>{ setRivColor(b.dataset.c); if(!rivToggle.checked){ rivToggle.checked=true; syncRivers(); } }));
+try{ const c=localStorage.getItem('riv-color'); if(c && rivBtns.some(b=>b.dataset.c===c)) rivColor=c; }catch(_){}
+setRivColor(rivColor);
+// One layer per stream-order filter, built once. Every sync re-reads the controls after
+// awaiting, then removes every river layer except the one wanted, so overlapping calls
+// (scrolling, toggling, changing order) can never leave an orphan layer on the map.
+function buildRiv(min){
+  return cached('nwm',()=>getTopo('nwm.json')).then(fc=>{
+    const o=f=>f.properties.strm_order||1;
+    const feats=fc.features.filter(f=>f.geometry && o(f)>=min);
+    return rivLayers[min]=L.geoJSON({type:'FeatureCollection',features:feats},{pane:'rivers',renderer:rivRenderer,interactive:false,
+      style:f=>({color:rivColor,weight:RIV_W[o(f)],opacity:1,lineCap:'round',lineJoin:'round'})});
+  });
+}
+function rivState(){ const on=rivToggle.checked, min=+rivOrder.value; return {on,min,hide:!on||current==='nwm'||current==='rios'}; }
+function applyRivers(){
+  const {min,hide}=rivState();
+  Object.entries(rivLayers).forEach(([k,l])=>{ const want=!hide && +k===min;
+    if(want && !map.hasLayer(l)) l.addTo(map); if(!want && map.hasLayer(l)) map.removeLayer(l); });
+}
+async function syncRivers(){
+  const {on,min,hide}=rivState();
+  rivOrder.disabled=!on;
+  try{ localStorage.setItem('riv-overlay', on?'1':'0'); localStorage.setItem('riv-order', String(min)); }catch(_){}
+  applyRivers();
+  if(hide) return;
+  await (rivPromises[min] ??= buildRiv(min));
+  applyRivers();
+}
+try{ rivToggle.checked = localStorage.getItem('riv-overlay')==='1'; const s=localStorage.getItem('riv-order'); if(s) rivOrder.value=s; else rivOrder.value='4'; }catch(_){ rivOrder.value='4'; }
+rivToggle.addEventListener('change',syncRivers); rivOrder.addEventListener('change',syncRivers);
+L.DomEvent.disableClickPropagation(document.querySelector('.rivbox'));
+setTimeout(syncRivers,0);
+
+// ---------- Legends ----------
+const legendEl = document.getElementById('legend');
+function rampRows(labels){ return `<div class="rows">${labels.map((t,i)=>`<div class="row"><span class="sw" style="background:${RAMP[i]}"></span><span class="num">${t}</span></div>`).join('')}</div>`; }
+function legendFor(id){
+  const v=V(id);
+  if(v.legendHTML) return `<div class="t">${v.label}</div>${v.legendHTML}`;
+  if(v.choro){
+    const c=v.choro;
+    const labels = c.discrete ? c.discrete.map(String) : c.classes.map(x=>x[1]);
+    let pal = c.discrete ? RAMP : (c._pal || rampN(labels.length)); if(!c._pal && c.reverse) pal=pal.slice().reverse();
+    const rows = `<div class="rows">${labels.map((t,i)=>`<div class="row"><span class="sw" style="background:${pal[i]}"></span><span class="num">${t}</span></div>`).join('')}`;
+    const share = c.share ? `<div class="row"><span class="sw" style="background:${SINGLE}"></span><span>Whole river in one unit (100 %)</span></div><div class="row"><span class="sw" style="background:${KARST}"></span><span>Drains into the karst</span></div>` : '';
+    const extra = (v.vec||[]).includes('noncontrib') ? `<div class="row"><span class="sw hatch-sw"></span><span>Non-contributing (karst)</span></div>` : '';
+    const note = c.discrete ? '<div class="s">Order 1 (headwaters) to 6 (mainstem)</div>' : (c.note?`<div class="s">${c.note}</div>`:'');
+    return `<div class="t">${v.label}</div>${note}${rows}${share}${extra}</div>`;
+  }
+  switch(id){
+    case 'hu12': return `<div class="t">HU12 sub-watersheds</div><div class="s">219 units · click one for its name</div>`;
+    case 'hu10only': return `<div class="t">HU10 watersheds</div><div class="s">21 on the main island, plus Vieques, Culebra and Isla de Mona · hover one for its code and size</div>`;
+    case 'hu10': return `<div class="t">Watersheds</div><div class="rows"><div class="row"><span class="ln" style="border-top-width:2.5px;border-top-color:#1d3a40"></span><span>HU10 boundary (shaded)</span></div><div class="row"><span class="ln" style="border-top-width:1px;border-top-color:#6e7d80"></span><span>HU12 boundary (gray)</span></div></div>`;
+    case 'dem': return `<div class="t">Elevation</div><div class="bar" style="background:linear-gradient(90deg,#5e8f5a,#8fb06a 6%,#c9c27d 16%,#b58c5a 35%,#8a6448 60%,#6f5444 85%,#a99a8c)"></div><div class="ends"><span>0 m</span><span>670 m</span><span>1,340 m</span></div>`;
+    case 'slope': return `<div class="t">Slope (% rise)</div><div class="bar" style="background:linear-gradient(90deg,#fbf3d5,#f6d38a 15%,#ec9a4a 35%,#c8512b 60%,#8a2216 85%,#4a0f0c)"></div><div class="ends"><span>0</span><span>40</span><span>80+</span></div>`;
+    case 'flowacc': return `<div class="t">Flow accumulation</div><div class="s">Upstream 30-m cells draining to each cell, log scale. Shown where ≥ 2,000 cells (1.8 km²).</div><div class="bar" style="background:linear-gradient(90deg,#6cb3dd,#2f7fbf 30%,#174f9a 65%,#081f5c)"></div><div class="ends"><span>2,000</span><span>~41,000</span><span>846,731</span></div>`;
+    case 'flowdir': { const d=[[1,'#c3c3c3','E'],[2,'#f26a2e','SE'],[4,'#f4e01e','S'],[8,'#6fb84a','SW'],[16,'#6ccdea','W'],[32,'#5c6fb6','NW'],[64,'#a1519d','N'],[128,'#ee3b33','NE']];
+      return `<div class="t">Flow direction (D8)</div><div class="rows">${d.map(([n,c,t])=>`<div class="row"><span class="sw" style="background:${c}"></span><span><span class="num">${n}</span> ${t}</span></div>`).join('')}</div>`; }
+    case 'nwm': { const W=[0.6,0.9,1.4,2,2.8,3.8], C=['#9cc9e0','#6aaed6','#3d8dc4','#2266a8','#124a8a','#0a2f63'];
+      return `<div class="t">NWM stream order</div><div class="rows">${W.map((w,i)=>`<div class="row"><span class="ln" style="border-top-width:${Math.max(1,w)}px;border-top-color:${C[i]}"></span><span>Order ${i+1}${i===0?' (headwaters)':i===5?' (mainstem)':''}</span></div>`).join('')}</div>`; }
+    case 'rios': return `<div class="t">Rivers and creeks</div><div class="rows"><div class="row"><span class="ln" style="border-top-width:2.4px;border-top-color:#1f63a5"></span><span>Named río or quebrada</span></div><div class="row"><span class="ln" style="border-top-width:1.2px;border-top-color:#6aa8d4"></span><span>Unnamed stream</span></div></div><div class="s">Hover a named stream or use the search. Names appear on the map as you zoom in.</div>`;
+    case 'imperv': { const vals=Object.keys(IMPERV_COLORS).map(Number).sort((a,b)=>b-a);
+      const names={1:'Urbano, Vial',0.9:'Urbanizable programado',0.75:'Urbanizable no programado',0.05:'SREP Ecológico (E, EH, EP)',0.25:'Rústico común',0.15:'SREP Agrícola',0.1:'SREP, Paisaje',0:'Agua, SREP Hídrico'};
+      return `<div class="t">Imperviousness used in the analysis</div><div class="rows">${vals.map(v=>`<div class="row"><span class="sw" style="background:${IMPERV_COLORS[String(v)]}"></span><span><span class="num">${v.toFixed(2)}</span> ${names[v]||''}</span></div>`).join('')}</div><div class="s">Full-detail polygons from zoom ${DETAIL_ZOOM}</div>`; }
+    case 'putclasses': return `<div class="t">Land use (PUT 2015)</div><div class="rows">${LU_CLASSES.map(([n,c])=>`<div class="row"><span class="sw" style="background:${c}"></span><span>${n}</span></div>`).join('')}</div><div class="s">SREP = Suelo Rústico Especialmente Protegido</div>`;
+  }
+  return '';
+}
+
+// ---------- View switching ----------
+const stormBox=document.getElementById('storm-box');
+L.DomEvent.disableClickPropagation(stormBox);
+let current = null, active = [], token = 0;
+async function show(id, force){
+  if(id===current && !force) return; current=id; const my=++token; const v=V(id);
+  stormBox.hidden = !VIEWS[id].storm;
+  document.getElementById('layer-select').value=id;
+  setTimeout(()=>{ try{ syncRivers(); }catch(_){} },0);
+  active.forEach(l=>map.removeLayer(l)); active=[];
+  Object.values(IMG).forEach(l=>map.hasLayer(l)&&map.removeLayer(l));
+  if(v.base) IMG.base.addTo(map);
+  if(v.img){ IMG.base.addTo(map); (IMG[v.img] ??= L.imageOverlay(v.img+'.webp',RB,{pane:'img',interactive:false})).addTo(map); }
+  luMode = v.lu || null;
+  Object.values(chunks).forEach(c=>c.setStyle(luStyle));
+  luDetail.clearLayers(); if(luMode) Object.values(chunks).forEach(c=>luDetail.addLayer(c));
+  syncLU();
+  legendEl.innerHTML = legendFor(id);
+  const parts = [];
+  if(v.choro) parts.push(choroLayer(v.choro));
+  (v.vec||[]).forEach(k=>parts.push(VEC[k]()));
+  const layers = await Promise.all(parts.map(p=>p.catch(()=>null)));
+  if(my!==token) return;
+  layers.forEach(l=>{ if(l){ l.addTo(map); active.push(l); } });
+  legendEl.innerHTML = legendFor(id);
+  if(id!=='rios') RIOS.hl=null;
+  drawLabels();
+}
+
+const sel = document.getElementById('layer-select');
+function fillSelect(){
+  const opt=k=>`<option value="${k}">${V(k).label}</option>`;
+  sel.innerHTML = `<optgroup label="Terrain and land use">${ORDER.filter(k=>!k.startsWith('n_')).map(opt).join('')}</optgroup><optgroup label="Design storms and runoff">${ORDER.filter(k=>k.startsWith('n_')).map(opt).join('')}</optgroup>`;
+  if(current) sel.value=current;
+}
+fillSelect();
+function setStorm(s, redraw=true){
+  if(s===storm) return; storm=s;
+  document.querySelectorAll('input[name="storm"]').forEach(r=>r.checked=(r.value===s));
+  fillSelect(); map.closePopup();
+  if(redraw && current && VIEWS[current].storm) show(current,true);
+}
+document.querySelectorAll('input[name="storm"]').forEach(r=>r.addEventListener('change',()=>setStorm(r.value)));
+sel.addEventListener('change',()=>{ map.closePopup(); show(sel.value); });
+
+// Scroll-driven steps
+const steps=[...document.querySelectorAll('.step')];
+const narrow = matchMedia('(max-width: 899px)');
+let activeStep=null, ticking=false;
+function pickStep(){
+  ticking=false;
+  // Trigger line: upper third of the screen on desktop, just below the pinned map on phones
+  const y = narrow.matches ? document.querySelector('.mapcol').getBoundingClientRect().bottom + innerHeight*0.12 : innerHeight*0.33;
+  let best=steps[0];
+  for(const s of steps){ if(s.getBoundingClientRect().top <= y) best=s; else break; }
+  if(best!==activeStep){ activeStep=best; steps.forEach(s=>s.classList.toggle('active',s===best));
+    const sv=best.dataset.view, st=best.dataset.storm;
+    if(st && st!==storm){ setStorm(st,false); current=null; }
+    show(sv); }
+}
+const onScroll=()=>{ if(!ticking){ ticking=true; requestAnimationFrame(pickStep); } };
+addEventListener('scroll',onScroll,{passive:true}); addEventListener('resize',onScroll);
+show('hu12'); pickStep();
+
+// Preload every layer in the background so switching is instant
+const idle = window.requestIdleCallback || (f=>setTimeout(f,600));
+idle(()=>{
+  ['dem.webp','flowdir.png','flowacc.webp','slope.webp','imperv_overview.png','lu_overview.png','rain10.webp','cn.webp','imperv22.webp','q10.webp'].forEach(u=>{ const i=new Image(); i.decoding='async'; i.src=u; });
+  cached('hu10',()=>getTopo('hu10.json',true)); cached('nwm',()=>getTopo('nwm.json',true)); cached('rios',()=>getTopo('rios.json',true)); cached('nc',()=>getTopo('noncontrib.json',true));
+});
+</script>
+
+</body>
+</html>
